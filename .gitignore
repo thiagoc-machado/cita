@@ -1,0 +1,28 @@
+# Ignore Python virtual environments
+venv/
+__pycache__/
+
+# Ignore PyInstaller build output
+dist/
+build/
+
+# Ignore IDE-specific settings
+.vscode/
+.idea/
+
+# Ignore operating system-specific files
+.DS_Store
+Thumbs.db
+*.log
+
+# Ignore environment file
+.env
+
+# Ignore pycache files
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+
+# Ignore local SQLite database file (if applicable)
+*.sqlite3
