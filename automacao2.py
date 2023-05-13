@@ -209,8 +209,8 @@ if texto_label == "Sin citas disponibles":
     message = client.messages \
                     .create(
                         body=f"SEM CITA {texto_label}",
-                        from_='+12707703927',
-                        to='+34653579325'
+                        from_='+',
+                        to='+'
                     )
 
     print(message.sid)
