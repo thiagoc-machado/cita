@@ -15,29 +15,52 @@ exit_key = False
 print('selecione 1 para ')
 print('selecione 2 para ')
 person = input()
+print('selecione 1 para NIE')
+print('selecione 2 para Passaporte')
+doc = input()
+
 if person == '1':
     print('Selecionado ')
-    NIE=''
-    NOMBRE=' '
-    APELLIDO1=''
-    APELLIDO2=''
-    FECHA_NASC='//'
-    TELEFONO=''
-    EMAIL=''
-elif person == '2':
-    print('Selecionado ')
-    NIE=''
     NOMBRE=''
     APELLIDO1=''
     APELLIDO2=''
     FECHA_NASC=''
     TELEFONO=''
     EMAIL=''
+    if  doc == '1':
+        print('')
+        DOCUMENTO=''
+    elif doc == '2':
+        print('Selecionado Passaporte')
+        DOCUMENTO=''
+    else:  
+        print('Opção inválida')
+        exit()
+
+elif person == '2':
+    print('Selecionado ')
+    NOMBRE=''
+    APELLIDO1=''
+    APELLIDO2=''
+    FECHA_NASC=''
+    TELEFONO=''
+    EMAIL=''
+    if  doc == '1':
+        print('Selecionado NIE')
+        DOCUMENTO=''
+    elif doc == '2':
+        print('Selecionado Passaporte')
+        DOCUMENTO=''
+    else:  
+        print('Opção inválida')
+        exit()
 else:
     print('Opção inválida')
     exit()
+
 cap = 0
-print('Preenchendo os campos')
+print('')
+print('Abrindo o navegador...')
 
 while exit_key == False:
     cap += 1
@@ -51,82 +74,100 @@ while exit_key == False:
     navegador = webdriver.Chrome(service=servico)
 
     navegador.get("https://www.tramita.gva.es/ctt-att-atr/asistente/iniciarTramite.html?tramite=CITA_PREVIA&version=2&idioma=es&idProcGuc=14104&idCatGuc=PR")
+    navegador.implicitly_wait(10)
     time.sleep(5)
+
+    print('Preenchendo dados...')
 
     ############################## PROVINCIA #################################################
     navegador.find_element(By.XPATH, '//*[@id="imc-forms-formulari"]/div/div[4]/div[2]/div/a/span').click()
-    time.sleep(1)
+    print('Seleciona provincia')
+    time.sleep(0.5)
     navegador.find_element(By.XPATH, '//*[@id="imc-forms-formulari"]/div/div[4]/div[2]/div/div/ul/li[4]/a').click()
-    time.sleep(1)
+    time.sleep(3)
 
     ############################## MUNICIPIO #################################################
     navegador.find_element(By.XPATH, '//*[@id="imc-forms-formulari"]/div/div[6]/div[2]/div/a/span').click()
-    time.sleep(1)
+    print('Seleciona municipio')
+    time.sleep(0.5)
     body = navegador.find_element(By.TAG_NAME, 'body')
     for _ in range(14): # ajuste este valor conforme necessário
         body.send_keys(Keys.DOWN)
         time.sleep(0.1)  # adicione um pequeno atraso entre cada pressionamento de tecla, se necessário
     time.sleep(0.5)
     navegador.find_element(By.XPATH, '//*[@id="imc-forms-formulari"]/div/div[6]/div[2]/div/div/ul/li[15]/a').click()
-    time.sleep(1)
+    time.sleep(3)
 
     ############################## SERVICIO #################################################
     navegador.find_element(By.XPATH, '//*[@id="imc-forms-formulari"]/div/div[8]/div[2]/div/a/span').click()
-    time.sleep(1)
+    print('seleciona servicio')
+    time.sleep(0.5)
     for _ in range(10): # ajuste este valor conforme necessário
         body.send_keys(Keys.DOWN)
         time.sleep(0.2)  # adicione um pequeno atraso entre cada pressionamento de tecla, se necessário
-    time.sleep(1)
+    #time.sleep(1.5)
     navegador.find_element(By.XPATH, '//*[@id="imc-forms-formulari"]/div/div[8]/div[2]/div/div/ul/li[11]/a').click()
-    time.sleep(1)
+    time.sleep(3)
 
     ############################## CENTRO #################################################
     navegador.find_element(By.XPATH, '//*[@id="imc-forms-formulari"]/div/div[10]/div[2]/div/a/span').click()
-    time.sleep(1)
+    print('clica no centro')
+    time.sleep(0.5)
     navegador.find_element(By.XPATH, '//*[@id="imc-forms-formulari"]/div/div[10]/div[2]/div/div/ul/li[2]/a').click()
-    time.sleep(1)
+    time.sleep(3)
 
     ############################## DNI/NIE #################################################
     navegador.find_element(By.XPATH, '//*[@id="imc-forms-formulari"]/div/div[17]/div[2]/div/a/span').click()
-    time.sleep(1)
-    #NIE
-    navegador.find_element(By.XPATH, '//*[@id="imc-forms-formulari"]/div/div[17]/div[2]/div/div/ul/li[2]/a').click()
-    #PASSAPORTE
-    #navegador.find_element(By.XPATH, '//*[@id="imc-forms-formulari"]/div/div[17]/div[2]/div/div/ul/li[3]/a').click()
-    time.sleep(1)
+    
+    time.sleep(0.5)
+    if doc == "1":
+        print('clica no NIE')
+        navegador.find_element(By.XPATH, '//*[@id="imc-forms-formulari"]/div/div[17]/div[2]/div/div/ul/li[2]/a').click()
+    else:
+        print('clica no PASSAPORTE')
+        navegador.find_element(By.XPATH, '//*[@id="imc-forms-formulari"]/div/div[17]/div[2]/div/div/ul/li[3]/a').click()
+    time.sleep(3)
 
     ############################## IDENTIFICACIÓN #################################################
     navegador.find_element(By.XPATH, '//*[@id="SOL_DNI"]').click()
-    time.sleep(0.1)
-    navegador.find_element(By.XPATH, '//*[@id="SOL_DNI"]').send_keys(NIE)
+    print('clica no IDENTIFICACIÓN')
+        
+    time.sleep(0.5)
+    navegador.find_element(By.XPATH, '//*[@id="SOL_DNI"]').send_keys(DOCUMENTO)
 
     ############################## NOMBRE #################################################
     navegador.find_element(By.XPATH, '//*[@id="SOL_NOMBRE"]').click()
+    print('clica no NOMBRE')
     time.sleep(0.5)
     navegador.find_element(By.XPATH, '//*[@id="SOL_NOMBRE"]').send_keys(NOMBRE)
 
     ############################## PRIMER APELLIDO #################################################
     navegador.find_element(By.XPATH, '//*[@id="SOL_APELLIDO1"]').click()
+    print('clica no PRIMER APELLIDO')
     time.sleep(0.2)
     navegador.find_element(By.XPATH, '//*[@id="SOL_APELLIDO1"]').send_keys(APELLIDO1)
 
     ############################## SEGUNDO APELLIDO #################################################
     navegador.find_element(By.XPATH, '//*[@id="SOL_APELLIDO2"]').click()
+    print('clica no SEGUNDO APELLIDO')
     time.sleep(0.2)
     navegador.find_element(By.XPATH, '//*[@id="SOL_APELLIDO2"]').send_keys(APELLIDO2)
 
     ############################## FECHA DE NACIMIENTO #################################################
     navegador.find_element(By.XPATH, '//*[@id="SOL_FECHA"]').click()
+    print('clica no FECHA DE NACIMIENTO')
     time.sleep(0.2)
     navegador.find_element(By.XPATH, '//*[@id="SOL_FECHA"]').send_keys(FECHA_NASC)
 
     ############################## TELÉFONO #################################################
     navegador.find_element(By.XPATH, '//*[@id="SOL_TFNO"]').click()
+    print('clica no TELÉFONO')
     time.sleep(0.2)
     navegador.find_element(By.XPATH, '//*[@id="SOL_TFNO"]').send_keys(TELEFONO)
 
     ############################## CORREO ELECTRÓNICO #################################################
     navegador.find_element(By.XPATH, '//*[@id="SOL_EMAIL"]').click()
+    print('clica no CORREO ELECTRÓNICO')
     time.sleep(0.2)
     navegador.find_element(By.XPATH, '//*[@id="SOL_EMAIL"]').send_keys(EMAIL)
 
@@ -135,9 +176,11 @@ while exit_key == False:
     def captcha():
         print('Lendo o captcha')
         navegador.find_element(By.XPATH, '//*[@id="imc-forms-formulari"]/div/div[48]/p').click()
+        print('clica no captcha')
 
         # Tire o screenshot da página inteira
         navegador.save_screenshot("screenshot.png")
+        print('Tirando o screenshot')
 
         def is_close_to_dimensions(w, h, target_width, target_height, tolerance=0.2):
             width_diff = abs(w - target_width) / target_width
@@ -204,7 +247,7 @@ while exit_key == False:
         ############################## envia #################################################
 
         navegador.find_element(By.XPATH, '//*[@id="imc-forms-navegacio"]/ul/li/button').click()
-        time.sleep(7.0)
+        time.sleep(3.0)
         return()
 
         ############################## confirma #################################################
@@ -217,19 +260,30 @@ while exit_key == False:
         try:
             navegador.find_element(By.XPATH, '//*[@id="SOL_DESDE"]').click() 
             captcha_resolvido = True
+            print("Captcha resolvido")
+            print('Continua - Próxima tela (confirmação dos dados)')
         except:
             navegador.find_element(By.XPATH, '//*[@id="imc-forms--missatge"]/div/div/div[3]/button[5]').click()
-            print("Captcha errado, tentando denovo...")
+            if navegador.find_element(By.XPATH, '//*[@id="imc-forms--missatge"]/div/div/h2/span').text == "No coincide el texto introducido con el que aparece en la imagen. Se ha generado otra imagen con un nuevo texto, en caso de que no lo visualice correctamente pulse sobre el boton Regenerar para generar un nuevo texto.":
+                print("Captcha errado, tentando novamente...")
+
+            else:
+                print("Pagina com erro, tentando novamente...")
+                navegador.find_element(By.XPATH, '//*[@id="imc-forms--missatge"]/div/div/div[3]/button[5]/span').click()
+                break
             time.sleep(1.0)
             navegador.find_element(By.XPATH, '//*[@id="ID_1666791417799"]').clear()
-            
+        
 
     ############################## CONTINUA PRX PANTALLA #################################################  
-    navegador.find_element(By.XPATH, '//*[@id="imc-forms-navegacio"]/ul/li/button').click() 
-
-    ############################## TEST CAPTCHA #################################################   
     time.sleep(7.0)
+    navegador.find_element(By.XPATH, '//*[@id="imc-forms-navegacio"]/ul/li/button').click() 
+    print('Continua - Próxima tela (citas disponíveis)')
+
+    ############################## LEER RESULTADOS #################################################   
+    time.sleep(8.0)
     label_elemento = navegador.find_element(By.XPATH, '//*[@id="imc-forms-formulari"]/div/fieldset/ul/li/div/label')
+    print('LEER RESULTADOS')
     texto_label = label_elemento.text
 
     ############################## print results #################################################
@@ -243,8 +297,8 @@ while exit_key == False:
         message = client.messages \
                         .create(
                             body=f"TEM CITA {texto_label}",
-                            from_='+',
-                            to='+'
+                            from_='',
+                            to=''
                         )
 
         print(message.sid)
@@ -257,15 +311,13 @@ while exit_key == False:
             time.sleep(3)
     else:
         print(texto_label)
-        print("Fechando navegador")
-        time.sleep(1)
-        print("tentando novamente.")
+        print("Fechando navegador...")
         navegador.quit()
     i=0
-    print("Procurando cita novamente em 10 minutos")
+    print("Procurando cita novamente em 5 minutos")
     print("pressione CTRL + C para sair")
     print(f"Numero de tentativas: {cap}")
-    while i < 600:
+    while i < 300:
         
         if keyboard.is_pressed('esc'):
                 navegador.quit()
@@ -273,12 +325,8 @@ while exit_key == False:
                 exit_key = True
                 break 
         time.sleep(1)
-        minutes, seconds = divmod(600 - i, 60)
-        if person == 1:
-            print(f"Procurando nova cita para  em {minutes:02d}:{seconds:02d}", end="\r")
-        if person == 2:
-            print(f"Procurando nova cita para  em {minutes:02d}:{seconds:02d}", end="\r")
-        else:
-            print(f"Procurando nova em {minutes:02d}:{seconds:02d}", end="\r")
+        minutes, seconds = divmod(300 - i, 60)
+
+        print(f"Procurando nova cita para {NOMBRE} em {minutes:02d}:{seconds:02d}", end="\r")    
         i+=1
 
