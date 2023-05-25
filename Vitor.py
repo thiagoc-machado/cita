@@ -9,55 +9,30 @@ from twilio.rest import Client
 import pytesseract
 import time
 import keyboard
-from datetime import datetime
 
 exit_key = False
 
-print('selecione 1 para Julie')
-print('selecione 2 para Thiago')
-person = input()
-print('selecione 1 para NIE')
-print('selecione 2 para Passaporte')
+print('digite 1 para NIE')
+print('digite 2 para Passaporte FV902583')
+print('digite 3 para Passaporte YE534479')
 doc = input()
 
-if person == '1':
-    print('Selecionado Julie')
-    DATA_MARCADO='18/12/2023 20:00'
-    NOMBRE=''
-    APELLIDO1=''
-    APELLIDO2=''
-    FECHA_NASC='//'
-    TELEFONO=''
-    EMAIL=''
-    if  doc == '':
-        print('Selecionado NIE')
-        DOCUMENTO=''
-    elif doc == '2':
-        print('Selecionado Passaporte')
-        DOCUMENTO=''
-    else:  
-        print('Opção inválida')
-        exit()
-
-elif person == '2':
-    print('Selecionado Thiago')
-    DATA_MARCADO='03/07/2023 09:30'
-    NOMBRE=''
-    APELLIDO1=''
-    APELLIDO2=''
-    FECHA_NASC='//'
-    TELEFONO=''
-    EMAIL=''
-    if  doc == '1':
-        print('Selecionado NIE')
-        DOCUMENTO=''
-    elif doc == '2':
-        print('Selecionado Passaporte')
-        DOCUMENTO=''
-    else:  
-        print('Opção inválida')
-        exit()
-else:
+NOMBRE='Victor'
+APELLIDO1='Aguiar'
+APELLIDO2='Dias Rodrigues'
+FECHA_NASC='13/06/2003'
+TELEFONO='693036666'
+EMAIL='victoraguiarrodrigues@yahoo.com'
+if  doc == '1':
+    print('Selecionado NIE Y7563471G')
+    DOCUMENTO='Y7563471G'
+elif doc == '2':
+    print('Selecionado Passaporte FV902583')
+    DOCUMENTO='FV902583'
+elif doc == '3':
+    print('Selecionado Passaporte YE534479')
+    DOCUMENTO='YE534479'
+else:  
     print('Opção inválida')
     exit()
 
@@ -292,44 +267,24 @@ while exit_key == False:
 
     if texto_label != "Sin citas disponibles":
         print(texto_label)
-        data1_obj = datetime.strptime(DATA_MARCADO, "%d/%m/%Y %H:%M")
-        data2_obj = datetime.strptime(texto_label, "%d/%m/%Y %H:%M")
-        if  data1_obj < data2_obj:
-            print(f"Cita encontrada para {texto_label}")
-            print(f"Cita marcada para {DATA_MARCADO}")
-            print(f"Voltando a procurar...")
-            print("Fechando navegador...")
-            navegador.quit()
-        else:
-            account_sid = ''
-            auth_token = ''
-            client = Client(account_sid, auth_token)
+        from twilio.rest import Client
 
-            message = client.messages \
-                            .create(
-                                body=f"TEM CITA {texto_label}",
-                                from_='+',
-                                to='+'
-                            )
-            print(message.sid)
+        account_sid = 'ACef1da88cb8569c6a6d159901520bfd0f'
+        auth_token = '[AuthToken]'
+        client = Client(account_sid, auth_token)
 
-            ############################## make apointment ##########################
-            #seleciona cita
-            print('Seleciona cita')
-            navegador.find_element(By.XPATH, '//*[@id="imc-forms-navegacio"]/ul/li[1]/button/span').click()
-            time.sleep(5.0)
-            #confirma 
-            print('Confirma cita')
-            navegador.find_element(By.XPATH, '//*[@id="imc-forms-navegacio"]/ul/li[1]/button/span').click()
-
-            print(f"cita marcada para {texto_label}")
-            ################################## pause ################################
-            while True:
-                if keyboard.is_pressed('esc'):
-                    navegador.quit()
-                    print("Navegador fechado.")
-                    break
-                time.sleep(3)
+        message = client.messages.create(
+        from_='whatsapp:+14155238886',
+        body=f'Cita encontrada para {NOMBRE} no documento {DOCUMENTO}.\n{texto_label}',
+        to='whatsapp:+34692036666'
+        )
+        print(message.sid)
+        while True:
+            if keyboard.is_pressed('esc'):
+                navegador.quit()
+                print("Navegador fechado.")
+                break
+            time.sleep(3)
     else:
         print(texto_label)
         print("Fechando navegador...")
