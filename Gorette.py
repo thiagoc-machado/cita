@@ -21,10 +21,10 @@ doc = input()
 bot_token = ":"
 bot_chat_id = ""
 
-print('\nBuscar cita pata ')
+print('\nBuscar cita pata Gorette')
 DATA_MARCADO='02/10/2023 10:00'
 NOMBRE=' '
-APELLIDO1=''
+APELLIDO1='
 APELLIDO2=''
 FECHA_NASC='//'
 TELEFONO=''

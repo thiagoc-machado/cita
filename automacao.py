@@ -25,7 +25,7 @@ bot_token = ":"
 bot_chat_id = ""
 
 if person == '1':
-    print('Selecionado Julie')
+    print('Selecionado ')
     DATA_MARCADO = '18/12/2023 20:00'
     NOMBRE = ' '
     APELLIDO1 = ''
@@ -268,15 +268,21 @@ while exit_key == False:
         continue
 
     ############################## FECHA DE NACIMIENTO #################################################
+    
     try:
-        #navegador.find_element(By.XPATH, '//*[@id="SOL_FECHA"]').click()
-        print('clica no FECHA DE NACIMIENTO')
+        fecha_element = navegador.find_element(By.XPATH, '//*[@id="SOL_FECHA"]')
+
+        # Divide a data em dia, mês e ano
+        dia, mes, ano = FECHA_NASC.split('/')
+
+        # Define o valor da data usando JavaScript
+        navegador.execute_script("arguments[0].value = arguments[1];", fecha_element, f"{ano}-{mes}-{dia}")
+
+        print('Preencheu o campo de data')
         time.sleep(0.2)
-        navegador.find_element(
-            By.XPATH, '//*[@id="SOL_FECHA"]').send_keys(FECHA_NASC)
 
     except:
-        print('Erro ao selecionar fecha de nacimiento, tentando novamente')
+        print('Erro ao preencher o campo de data, tentando novamente')
         navegador.quit()
         time.sleep(5)
         continue
