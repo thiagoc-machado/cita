@@ -1,0 +1,10 @@
+
+09-06-2023 16:50:39: Cita encontrada para THIAGO na data 19/02/2024 09:30, não marcada pois já havia sido marcada para 01/11/2023 09:30
+09-06-2023 16:56:47: Cita encontrada para THIAGO na data 19/02/2024 09:30, não marcada pois já havia sido marcada para 01/11/2023 09:30
+09-06-2023 17:03:14: Cita encontrada para THIAGO na data 19/02/2024 09:30, não marcada pois já havia sido marcada para 01/11/2023 09:30
+10-06-2023 09:39:12: Cita encontrada para THIAGO na data 16/02/2024 09:00, não marcada pois já havia sido marcada para 01/11/2023 09:30
+10-06-2023 09:45:20: Cita encontrada para THIAGO na data 16/02/2024 09:00, não marcada pois já havia sido marcada para 01/11/2023 09:30
+10-06-2023 09:51:29: Cita encontrada para THIAGO na data 16/02/2024 09:00, não marcada pois já havia sido marcada para 01/11/2023 09:30
+10-06-2023 11:19:48: Cita encontrada para THIAGO na data 26/02/2024 09:30, não marcada pois já havia sido marcada para 01/11/2023 09:30
+10-06-2023 11:25:56: Cita encontrada para THIAGO na data 26/02/2024 09:30, não marcada pois já havia sido marcada para 01/11/2023 09:30
+10-06-2023 11:32:19: Cita encontrada para THIAGO na data 26/02/2024 09:30, não marcada pois já havia sido marcada para 01/11/2023 09:30
