@@ -18,8 +18,8 @@ print('\nSelecione 1 para NIE')
 print('Selecione 2 para Passaporte')
 doc = input()
 
-bot_token = "5843494429:AAFnlrLmTzCtgU8ipmffCPoZ2w2ZKoYQonU"
-bot_chat_id = "2137590532"
+bot_token = ":"
+bot_chat_id = ""
 
 print('\nBuscar cita pata ')
 DATA_MARCADO='// 10:00'
