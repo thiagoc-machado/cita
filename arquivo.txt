@@ -8,3 +8,5 @@
 10-06-2023 11:19:48: Cita encontrada para THIAGO na data 26/02/2024 09:30, não marcada pois já havia sido marcada para 01/11/2023 09:30
 10-06-2023 11:25:56: Cita encontrada para THIAGO na data 26/02/2024 09:30, não marcada pois já havia sido marcada para 01/11/2023 09:30
 10-06-2023 11:32:19: Cita encontrada para THIAGO na data 26/02/2024 09:30, não marcada pois já havia sido marcada para 01/11/2023 09:30
+12-06-2023 17:08:21: Cita encontrada para THIAGO na data 18/12/2023 09:30, não marcada pois já havia sido marcada para 01/11/2023 09:30
+12-06-2023 17:21:31: Cita encontrada para THIAGO na data 10/07/2023 09:30, Marcada com sucesso

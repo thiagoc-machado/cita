@@ -25,14 +25,15 @@ bot_token = ":"
 bot_chat_id = ""
 
 if person == '1':
-    print('Selecionado ')
+    print('Selecionado Julie')
     DATA_MARCADO = '18/12/2023 20:00'
+    DATA_INICIAL = '01/09/2023 00:00'
     NOMBRE = ' '
     APELLIDO1 = ''
     APELLIDO2 = ''
     FECHA_NASC = '//'
     TELEFONO = ''
-    EMAIL = '@MSN.COM'
+    EMAIL = '@.COM'
     if doc == '1':
         print('Selecionado NIE')
         DOCUMENTO = ''
@@ -44,14 +45,15 @@ if person == '1':
         exit()
 
 elif person == '2':
-    print('Selecionado ')
+    print('Selecionado Thiago')
     DATA_MARCADO = '01/11/2023 09:30'
+    DATA_INICIAL = '01/06/2023 00:00'
     NOMBRE = ''
     APELLIDO1 = ''
     APELLIDO2 = ''
     FECHA_NASC = '//'
     TELEFONO = ''
-    EMAIL = '@YAHOO.COM.BR'
+    EMAIL = '@.COM.BR'
     if doc == '1':
         print('Selecionado NIE')
         DOCUMENTO = ''
@@ -103,7 +105,7 @@ def send_image_to_telegram(image_path):
 
 
 send_message_to_telegram(
-    f'Bot iniciado\nBuscando cita para {NOMBRE}\nDocumento: {DOCUMENTO}\nBuscando cita com data antes de {DATA_MARCADO}')
+    f'Bot iniciado\nBuscando cita para {NOMBRE}\nDocumento: {DOCUMENTO}\nBuscando cita com data entre {DATA_INICIAL} e {DATA_MARCADO}')
 
 while exit_key == False:
     cap += 1
@@ -268,21 +270,16 @@ while exit_key == False:
         continue
 
     ############################## FECHA DE NACIMIENTO #################################################
-    
+
     try:
-        fecha_element = navegador.find_element(By.XPATH, '//*[@id="SOL_FECHA"]')
-
-        # Divide a data em dia, mês e ano
-        dia, mes, ano = FECHA_NASC.split('/')
-
-        # Define o valor da data usando JavaScript
-        navegador.execute_script("arguments[0].value = arguments[1];", fecha_element, f"{ano}-{mes}-{dia}")
-
-        print('Preencheu o campo de data')
+        # navegador.find_element(By.XPATH, '//*[@id="SOL_FECHA"]').click()
+        navegador.switch_to.active_element.send_keys(Keys.TAB)
+        print('clica no FECHA DE NACIMIENTO')
         time.sleep(0.2)
-
+        navegador.find_element(
+            By.XPATH, '//*[@id="SOL_FECHA"]').send_keys(FECHA_NASC)
     except:
-        print('Erro ao preencher o campo de data, tentando novamente')
+        print('Erro ao selecionar fecha de nacimiento, tentando novamente')
         navegador.quit()
         time.sleep(5)
         continue
@@ -455,15 +452,18 @@ while exit_key == False:
     if texto_label != "Sin citas disponibles":
         print(texto_label)
         data1_obj = datetime.strptime(DATA_MARCADO, "%d/%m/%Y %H:%M")
+        data3_obj = datetime.strptime(DATA_INICIAL, "%d/%m/%Y %H:%M")
         data2_obj = datetime.strptime(texto_label, "%d/%m/%Y %H:%M")
-        if data1_obj < data2_obj:
+
+        if data1_obj < data2_obj and data2_obj > data3_obj:
             print(f"Cita encontrada para {texto_label}")
-            print(f"Cita marcada para {DATA_MARCADO}")
+            print(
+                f"Procurando cita con data entre {DATA_INICIAL} e {DATA_MARCADO}")
             print(f"Voltando a procurar...")
             print("Fechando navegador...")
 
             data_hora = time.strftime("%d-%m-%Y %H:%M:%S")
-            mensagem = f"{data_hora}: Cita encontrada para {NOMBRE} na data {texto_label}, não marcada pois já havia sido marcada para {DATA_MARCADO}\n"
+            mensagem = f"{data_hora}: Cita encontrada para {NOMBRE} na data {texto_label}, não marcada, buscando cita entre {DATA_INICIAL} e {DATA_MARCADO}\n"
             with open("arquivo.txt", "a") as arquivo:
                 arquivo.write(mensagem)
 
@@ -504,9 +504,17 @@ while exit_key == False:
                     By.XPATH, '//*[@id="imc-forms-navegacio"]/ul/li/button').click()
                 cita = 1
                 data_hora = time.strftime("%d-%m-%Y %H:%M:%S")
-                mensagem = f"{data_hora}: Cita encontrada para {NOMBRE} na data {texto_label}, Marcada com sucesso\n"
-                with open("arquivo.txt", "a") as arquivo:
+
+                nome = NOMBRE.replace(" ", "_")
+
+                mensagem = f"{data_hora}: Cita encontrada para {NOMBRE} no doc {DOCUMENTO} na data {texto_label}, Marcada com sucesso\n"
+                with open(f"arquivo_{nome}.txt", "a") as arquivo:
                     arquivo.write(mensagem)
+
+                mensagem = f"{data_hora}: Cita marcada para {NOMBRE} doc {DOCUMENTO} na data {texto_label}\n"
+                with open(f"citas_marcadas_{nome}.txt", "a") as arquivo:
+                    arquivo.write(mensagem)
+
                 input("Pressione enter para sair...")
                 navegador.quit()
                 sys.exit()

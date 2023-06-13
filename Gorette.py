@@ -18,17 +18,17 @@ print('\nSelecione 1 para NIE')
 print('Selecione 2 para Passaporte')
 doc = input()
 
-bot_token = ":"
-bot_chat_id = ""
+bot_token = "5843494429:AAFnlrLmTzCtgU8ipmffCPoZ2w2ZKoYQonU"
+bot_chat_id = "2137590532"
 
-print('\nBuscar cita pata Gorette')
-DATA_MARCADO='02/10/2023 10:00'
+print('\nBuscar cita pata ')
+DATA_MARCADO='// 10:00'
 NOMBRE=' '
-APELLIDO1='
+APELLIDO1=''
 APELLIDO2=''
 FECHA_NASC='//'
 TELEFONO=''
-EMAIL='@soygo.es'
+EMAIL='@.'
 if  doc == '1':
     print('Selecionado NIE')
     DOCUMENTO=''
