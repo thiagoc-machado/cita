@@ -16,7 +16,7 @@ for arquivo in arquivos:
     regiao_letras = []
 
     # filtrar os contornos que são realmente de letras
-    for contorno in contornos:
+    for contorno in contornos: 
         (x, y, largura, altura) = cv2.boundingRect(contorno)
         area = cv2.contourArea(contorno)
         if area > 115:

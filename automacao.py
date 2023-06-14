@@ -12,7 +12,7 @@ from datetime import datetime
 import requests
 import sys
 
-exit_key = False
+exit_key = False 
 
 print('selecione 1 para Julie')
 print('selecione 2 para Thiago')
