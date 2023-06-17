@@ -12,7 +12,7 @@ from datetime import datetime
 import requests
 import sys
 
-exit_key = False 
+exit_key = False
 
 print('selecione 1 para Julie')
 print('selecione 2 para Thiago')
@@ -38,7 +38,7 @@ if person == '1':
         print('Selecionado NIE')
         DOCUMENTO = ''
     elif doc == '2':
-        print('Selecionado Passaporte')
+        print(' Passaporte')
         DOCUMENTO = ''
     else:
         print('Opção inválida')
@@ -53,7 +53,7 @@ elif person == '2':
     APELLIDO2 = ''
     FECHA_NASC = '//'
     TELEFONO = ''
-    EMAIL = '@.COM.BR'
+    EMAIL = '@YAHOO.COM.BR'
     if doc == '1':
         print('Selecionado NIE')
         DOCUMENTO = ''
