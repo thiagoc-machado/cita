@@ -38,7 +38,7 @@ if person == '1':
         print('Selecionado NIE')
         DOCUMENTO = ''
     elif doc == '2':
-        print(' Passaporte')
+        print('Selecionado Passaporte')
         DOCUMENTO = ''
     else:
         print('Opção inválida')
@@ -53,7 +53,7 @@ elif person == '2':
     APELLIDO2 = ''
     FECHA_NASC = '//'
     TELEFONO = ''
-    EMAIL = '@YAHOO.COM.BR'
+    EMAIL = '@.COM.BR'
     if doc == '1':
         print('Selecionado NIE')
         DOCUMENTO = ''
