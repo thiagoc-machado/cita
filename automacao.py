@@ -25,7 +25,7 @@ bot_token = ":"
 bot_chat_id = ""
 
 if person == '1':
-    print('Selecionado Julie')
+    print('Selecionado ')
     DATA_MARCADO = '18/12/2023 20:00'
     DATA_INICIAL = '01/09/2023 00:00'
     NOMBRE = ' '
@@ -45,7 +45,7 @@ if person == '1':
         exit()
 
 elif person == '2':
-    print('Selecionado Thiago')
+    print('Selecionado ')
     DATA_MARCADO = '01/11/2023 09:30'
     DATA_INICIAL = '01/06/2023 00:00'
     NOMBRE = ''
