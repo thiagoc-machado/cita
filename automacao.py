@@ -33,7 +33,7 @@ if person == '1':
     APELLIDO2 = ''
     FECHA_NASC = '//'
     TELEFONO = ''
-    EMAIL = '@.COM'
+    EMAIL = '@.'
     if doc == '1':
         print('Selecionado NIE')
         DOCUMENTO = ''
