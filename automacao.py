@@ -33,7 +33,7 @@ if person == '1':
     APELLIDO2 = ''
     FECHA_NASC = '//'
     TELEFONO = ''
-    EMAIL = '@.'
+    EMAIL = ''
     if doc == '1':
         print('Selecionado NIE')
         DOCUMENTO = ''
@@ -53,7 +53,7 @@ elif person == '2':
     APELLIDO2 = ''
     FECHA_NASC = '//'
     TELEFONO = ''
-    EMAIL = '@.'
+    EMAIL = '.'
     if doc == '1':
         print('Selecionado NIE')
         DOCUMENTO = ''
