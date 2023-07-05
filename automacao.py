@@ -11,55 +11,56 @@ import keyboard
 from datetime import datetime
 import requests
 import sys
+import os
 
 exit_key = False
 
-print('selecione 1 para Julie')
-print('selecione 2 para Thiago')
+print(f'selecione 1 para {os.getenv("NOMBRE_1")}')
+print(f'selecione 2 para {os.getenv("NOMBRE_2")}')
 person = input()
 print('selecione 1 para NIE')
 print('selecione 2 para Passaporte')
 doc = input()
 
-bot_token = ":"
-bot_chat_id = ""
+bot_token = os.getenv("TELEGRAM_TOKEN")
+bot_chat_id = os.getenv("TELEGRAM_ID")
 
 if person == '1':
     print('Selecionado ')
-    DATA_MARCADO = '18/12/2023 20:00'
-    DATA_INICIAL = '01/09/2023 00:00'
-    NOMBRE = ' '
-    APELLIDO1 = ''
-    APELLIDO2 = ''
-    FECHA_NASC = '//'
-    TELEFONO = ''
-    EMAIL = ''
+    DATA_MARCADO = os.getenv("DATA_MARCADO_1")
+    DATA_INICIAL = os.getenv("DATA_INICIAL_1")
+    NOMBRE = os.getenv("NOMBRE_1")
+    APELLIDO1 = os.getenv("APELLIDO1_1")
+    APELLIDO2 = os.getenv("APELLIDO2_1")
+    FECHA_NASC = os.getenv("FECHA_NASC_1")
+    TELEFONO = os.getenv("TELEFONO_1")
+    EMAIL = os.getenv("EMAIL_1")
     if doc == '1':
         print('Selecionado NIE')
-        DOCUMENTO = ''
+        DOCUMENTO = os.getenv("NIE_1")
     elif doc == '2':
         print('Selecionado Passaporte')
-        DOCUMENTO = ''
+        DOCUMENTO = os.getenv("PASSAPORTE_1")
     else:
         print('Opção inválida')
         exit()
 
 elif person == '2':
     print('Selecionado ')
-    DATA_MARCADO = '01/11/2023 09:30'
-    DATA_INICIAL = '01/06/2023 00:00'
-    NOMBRE = ''
-    APELLIDO1 = ''
-    APELLIDO2 = ''
-    FECHA_NASC = '//'
-    TELEFONO = ''
-    EMAIL = '.'
+    DATA_MARCADO = os.getenv("DATA_MARCADO_2")
+    DATA_INICIAL = os.getenv("DATA_INICIAL_2")
+    NOMBRE = os.getenv("NOMBRE_2")
+    APELLIDO1 = os.getenv("APELLIDO1_2")
+    APELLIDO2 = os.getenv("APELLIDO2_2")
+    FECHA_NASC = os.getenv("FECHA_NASC_2")
+    TELEFONO = os.getenv("TELEFONO_2")
+    EMAIL = os.getenv("EMAIL_2")
     if doc == '1':
         print('Selecionado NIE')
-        DOCUMENTO = ''
+        DOCUMENTO = os.getenv("NIE_2")
     elif doc == '2':
         print('Selecionado Passaporte')
-        DOCUMENTO = ''
+        DOCUMENTO = os.getenv("PASSAPORTE_2")
     else:
         print('Opção inválida')
         exit()
