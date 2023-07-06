@@ -106,7 +106,7 @@ def send_image_to_telegram(image_path):
 
 
 send_message_to_telegram(
-    f'Bot iniciado\nBuscando cita para {NOMBRE}\nDocumento: {DOCUMENTO}\nBuscando cita com data entre {DATA_INICIAL} e {DATA_MARCADO}')
+    f'Bot iniciado\nBuscando cita para {NOMBRE}\nDocumento: {DOCUMENTO}\nBuscando cita com data entre {DATA_INICIAL} e {DATA_MARCADO}.')
 
 while exit_key == False:
     cap += 1
