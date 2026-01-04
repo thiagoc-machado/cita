@@ -1,19 +1,16 @@
 # Web Automation Project
 
-This project aims to automate the process of accessing a website, filling out a form, taking a screenshot, solving a captcha, and sending an SMS notification. The primary technologies used in this project are Python, Selenium WebDriver, OpenCV, Tesseract OCR, Twilio, and PyInstaller.
+Automação para buscar e marcar cita prévia (fluxo padrão) e para monitorar certificados de concordancia (apenas alerta). Usa Python, Selenium WebDriver, OpenCV, Tesseract OCR, Telegram e Twilio.
 
 ## Features
 
-- Navigates to a specific website using Selenium WebDriver
-- Fills out a form with data and submits it
-- Takes a screenshot of the entire webpage, including a captcha image
-- Crops the captcha image from the screenshot using OpenCV
-- Processes the captcha image to improve OCR recognition
-- Uses Tesseract OCR to recognize characters in the captcha image
-- Solves the captcha and submits the form
-- Sends an SMS notification via Twilio upon successful form submission
+- Busca/seleciona província/município, resolve captcha e marca cita (fluxo padrão)
+- Modo CERTIFICADOS CONCORDANCIA (apenas informa disponibilidade via Telegram)
+- Captura de tela e recorte de captcha com OpenCV + Tesseract
+- Notificações via Telegram (e Twilio opcional)
+- Intervalo de busca configurável via `.env` com jitter ±20% para evitar bloqueios
 - Loads configuration values from a `.env` file
-- Can be packaged as a standalone Windows application using PyInstaller
+- Pode ser empacotado com PyInstaller
 
 ## Requirements
 
@@ -27,18 +24,48 @@ This project aims to automate the process of accessing a website, filling out a 
 - Twilio
 - python-dotenv
 
-## Installation
+## Setup rápido
 
-Clone the repository or download the project files.
-Create a virtual environment and activate it.
-Install the required packages using pip install -r requirements.txt.
-Install Tesseract OCR on your computer following the official documentation.
-Place a valid .env file in the project directory with the necessary API keys and configuration values.
-Run the script using python main.py (or your preferred method for running Python scripts).
+1. Crie e ative o venv.
+2. `pip install -r requirements.txt`.
+3. Instale o Tesseract OCR (Windows: `C:\Program Files\Tesseract-OCR\tesseract.exe`).
+4. Baixe o `chromedriver.exe` compatível com seu Chrome e configure em `.env` `CHROMEDRIVER_BINARY=C:/tools/chromedriver.exe`.
+5. Preencha `.env` com os dados (vide `env_example`).
 
-## Usage
+## Execução
 
-Follow the installation steps to set up the project. Once the script is running, it will automate the process of navigating to the website, filling out the form, solving the captcha, and sending an SMS notification. You can customize the script to suit your specific needs by modifying the form fields, captcha processing, and other parts of the code.
+```bash
+python automacao.py
+```
+
+- Escolha `1` para fluxo padrão (marcar cita) ou `2` para modo CONCORDANCIA (apenas alerta).
+- O intervalo de repetição usa `INTERVALO_BUSCA_MINUTOS` com jitter ±20% para simular comportamento humano.
+- Pausas curtas são inseridas entre interações para reduzir bloqueios.
+
+## Variáveis principais (.env)
+
+- `NOMBRE`, `DNI` (para modo concordancia) ou blocos `_1/_2` para fluxo padrão.
+- `INTERVALO_BUSCA_MINUTOS`: base em minutos para intervalo entre tentativas (default 5, com jitter ±20%).
+- `CHROMEDRIVER_BINARY`: caminho absoluto do chromedriver.
+- `TELEGRAM_TOKEN`, `TELEGRAM_ID`: para alertas.
+- Opcional teste Telegram: `TELEGRAM_TEST_TOKEN`, `TELEGRAM_TEST_CHAT_ID` (usados apenas em teste de integração).
+
+## Modo CERTIFICADOS CONCORDANCIA
+
+Fluxo determinístico por XPath:
+1) Seleciona província `Valencia` e clica `Aceptar`.
+2) Seleciona `POLICIA - CERTIFICADOS CONCORDANCIA` e clica `Aceptar`.
+3) Clica `Entrar`.
+4) Preenche `txtIdCitado` (DNI) e `txtDesCitado` (nome) e clica `Enviar`.
+5) Se mensagem for “En este momento no hay citas disponibles...”, clica `Salir` e recomeça após intervalo com jitter.
+6) Se houver disponibilidade, notifica Telegram e mantém navegador aberto para marcação manual.
+
+Se aparecer tela de bloqueio “The requested URL was rejected / Your support ID...”, o navegador fecha e o contador reinicia.
+
+## Testes
+
+- Unitários: `python -m pytest tests/test_automacao_lib.py`
+- Teste de integração Telegram (envia mensagem real): defina `TELEGRAM_TEST_TOKEN` e `TELEGRAM_TEST_CHAT_ID` e rode `python -m pytest -m integration tests/test_automacao_lib.py`
 
 ## Contributing
 
