@@ -16,6 +16,7 @@ import sys
 import os
 from shutil import which
 from os import path
+import random
 
 load_dotenv()
 
@@ -130,22 +131,78 @@ def send_image_to_telegram(image_path):
         print(f"Erro ao enviar imagem para o Telegram: {e}")
 
 
-def click_by_text_or_value(wait, texts):
-    """Tenta clicar em um botão/input pelo texto visível ou valor."""
+
+
+
+
+
+def human_pause(min_s=0.3, max_s=1.2):
+    """Pequena pausa aleatoria para simular tempo humano entre acoes."""
+    time.sleep(random.uniform(min_s, max_s))
+
+
+
+def compute_wait_seconds():
+    """Calcula intervalo em segundos baseado no .env com jitter de +/-20%."""
+    try:
+        base_minutes = float(os.getenv('INTERVALO_BUSCA_MINUTOS', '5'))
+    except ValueError:
+        base_minutes = 5.0
+    jitter_factor = random.uniform(0.8, 1.2)
+    seconds = max(30, int(base_minutes * 60 * jitter_factor))
+    return seconds, base_minutes, jitter_factor
+
+
+def is_support_blocked(driver):
+    """Detecta tela de bloqueio 'The requested URL was rejected'."""
+    page = driver.page_source
+    if "The requested URL was rejected" in page or "Your support ID is" in page:
+        return True
+    return False
+
+
+def click_by_text_or_value(driver, wait, texts):
+    """Tenta clicar em um botao/input pelo texto visivel ou valor, com fallback em JS click."""
     for text in texts:
-        try:
-            wait.until(EC.element_to_be_clickable(
-                (By.XPATH, f"//button[normalize-space()='{text}']"))).click()
-            return True
-        except Exception:
+        normalized = text.lower()
+        locator_candidates = [
+            (By.XPATH, f"//button[normalize-space()='{text}']"),
+            (By.XPATH, f"//button[contains(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '{normalized}')]") ,
+            (By.XPATH, f"//input[@type='submit' and @value='{text}']"),
+            (By.XPATH, f"//input[@type='submit' and contains(translate(@value, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '{normalized}')]"),
+            (By.XPATH, f"//input[@type='button' and contains(translate(@value, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '{normalized}')]"),
+            (By.XPATH, "//*[@id='btnAceptar']"),
+        ]
+        for locator in locator_candidates:
             try:
-                wait.until(EC.element_to_be_clickable(
-                    (By.XPATH, f"//input[@type='submit' and @value='{text}']"))).click()
-                return True
+                elem = wait.until(EC.element_to_be_clickable(locator))
+                try:
+                    elem.click()
+                    human_pause()
+                    return True
+                except Exception:
+                    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", elem)
+                    driver.execute_script("arguments[0].click();", elem)
+                    human_pause()
+                    return True
             except Exception:
                 continue
     return False
 
+
+def click_xpath(driver, wait, xpath):
+    """Clica por XPath com fallback em scroll + JS."""
+    try:
+        elem = wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
+        try:
+            elem.click()
+        except Exception:
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", elem)
+            driver.execute_script("arguments[0].click();", elem)
+        human_pause()
+        return True
+    except Exception:
+        return False
 
 def select_option(wait, locator_candidates, option_text):
     """Seleciona uma opção em um <select> tentando vários localizadores."""
@@ -153,6 +210,7 @@ def select_option(wait, locator_candidates, option_text):
         try:
             select_elem = wait.until(EC.element_to_be_clickable(locator))
             Select(select_elem).select_by_visible_text(option_text)
+            human_pause()
             return True
         except Exception:
             continue
@@ -199,101 +257,114 @@ def build_chrome_service():
     return Service(ChromeDriverManager().install())
 
 
+
 def executar_fluxo_concordancia(navegador, wait, documento, nombre):
-    """Fluxo específico para buscar CERTIFICADOS CONCORDANCIA sem marcar cita."""
-    if not select_option(wait, [(By.ID, "form"), (By.NAME, "form")], "Valencia"):
-        return False
-
-    if not click_by_text_or_value(wait, ["Aceptar", "ACEPTAR"]):
-        return False
-
-    # Mantém oficina padrão (Cualquier Oficina) e troca apenas o serviço.
-    tramite_selecionado = select_option(
-        wait,
-        [
-            (By.ID, "tramiteGrupo[0]"),
-            (By.NAME, "tramiteGrupo[0]"),
-            (By.CSS_SELECTOR, "select[id^='tramiteGrupo']")
-        ],
-        "POLICIA - CERTIFICADOS CONCORDANCIA"
-    )
-    if not tramite_selecionado:
-        return False
-
-    if not click_by_text_or_value(wait, ["Aceptar", "ACEPTAR"]):
-        return False
-
-    if not click_by_text_or_value(wait, ["Entrar"]):
-        return False
-
-    # Campos de identificação
+    """Fluxo especifico para CERTIFICADOS CONCORDANCIA usando XPaths fornecidos."""
     try:
-        wait.until(EC.element_to_be_clickable(
-            (By.XPATH, "//input[contains(@id,'txtIdCitado') or contains(@name,'txtIdCitado')]"))).send_keys(documento)
-        wait.until(EC.element_to_be_clickable(
-            (By.XPATH, "//input[contains(@id,'txtDesCitado') or contains(@name,'txtDesCitado')]"))).send_keys(nombre)
-    except Exception:
-        return False
+        if not select_option(wait, [(By.ID, 'form'), (By.NAME, 'form')], 'Valencia'):
+            return 'erro'
 
-    if not click_by_text_or_value(wait, ["Solicitar Cita", "Enviar", "Aceptar"]):
-        return False
+        if not click_xpath(navegador, wait, "//*[@id='btnAceptar']"):
+            return 'erro'
 
-    time.sleep(4)
-    return True
+        if not select_option(
+            wait,
+            [(By.ID, 'tramiteGrupo[0]'), (By.NAME, 'tramiteGrupo[0]'), (By.XPATH, "//*[@id='tramiteGrupo[0]']")],
+            'POLICIA - CERTIFICADOS CONCORDANCIA'
+        ):
+            return 'erro'
+
+        if not click_xpath(navegador, wait, "//*[@id='btnAceptar']"):
+            return 'erro'
+
+        if not click_xpath(navegador, wait, "//*[@id='btnEntrar']"):
+            return 'erro'
+
+        wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id='txtIdCitado']"))).send_keys(documento)
+        human_pause()
+        wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id='txtDesCitado']"))).send_keys(nombre)
+        human_pause()
+
+        if not click_xpath(navegador, wait, "//*[@id='btnEnviar']"):
+            return 'erro'
+
+        time.sleep(0.5)
+        if not click_xpath(navegador, wait, "//*[@id='btnEnviar']"):
+            return 'erro'
+
+        msg_elem = wait.until(EC.presence_of_element_located((By.XPATH, "//*[@id='mainWindow']/div/div[2]/section/div[2]/form/div[1]/p")))
+        msg_text = msg_elem.text.strip()
+        if 'En este momento no hay citas disponibles' in msg_text:
+            click_xpath(navegador, wait, "//*[@id='btnSalir']")
+            return 'sem_cita'
+
+        return 'cita_disponivel'
+    except Exception as e:
+        print(f'Erro no fluxo de concordancia: {e}')
+        return 'erro'
+
 
 
 def buscar_carta_concordancia(documento, nombre):
     """Loop que verifica a carta de concordancia e apenas avisa no Telegram."""
     tentativa = 0
     send_message_to_telegram(
-        f"Bot iniciado no modo CERTIFICADOS CONCORDANCIA para {nombre} ({documento})."
+        f'Bot iniciado no modo CERTIFICADOS CONCORDANCIA para {nombre} ({documento}).'
     )
 
     while not exit_key:
         tentativa += 1
-        print(f"Tentativa (concordancia): {tentativa}")
+        print(f'Tentativa (concordancia): {tentativa}')
         load_dotenv()
         servico = build_chrome_service()
         navegador = webdriver.Chrome(service=servico, options=build_chrome_options())
         wait = WebDriverWait(navegador, 15)
 
+        result = 'erro'
         try:
-            navegador.get(
-                "https://icp.administracionelectronica.gob.es/icpplus/index.html")
+            navegador.get('https://icp.administracionelectronica.gob.es/icpplus/index.html')
             navegador.implicitly_wait(10)
-
-            if not executar_fluxo_concordancia(navegador, wait, documento, nombre):
-                raise Exception("Não foi possível completar o fluxo de concordancia.")
-
-            page_text = navegador.page_source
-            if "En este momento no hay citas disponibles" in page_text:
-                print("Sem citas disponíveis para concordancia.")
-            else:
-                print("Cita disponível para concordancia! Notificando no Telegram.")
-                send_message_to_telegram(
-                    "Há cita disponível para CERTIFICADOS CONCORDANCIA. Entre no site para marcar."
-                )
-                try:
-                    navegador.save_screenshot("cita_concordancia.png")
-                    send_image_to_telegram("cita_concordancia.png")
-                except Exception as e:
-                    print(f"Erro ao enviar print: {e}")
+            if is_support_blocked(navegador):
+                result = 'bloqueado'
+                raise Exception("Tela de bloqueio detectada")
+            result = executar_fluxo_concordancia(navegador, wait, documento, nombre)
         except Exception as e:
-            print(f"Erro ao buscar concordancia: {e}")
-        finally:
-            navegador.quit()
+            print(f'Erro ao buscar concordancia: {e}')
 
+        if result == 'cita_disponivel':
+            print('Cita disponivel para concordancia! Notificando no Telegram.')
+            send_message_to_telegram(
+                'Ha cita disponivel para CERTIFICADOS CONCORDANCIA. Entre no site para marcar.'
+            )
+            try:
+                navegador.save_screenshot('cita_concordancia.png')
+                send_image_to_telegram('cita_concordancia.png')
+            except Exception as e:
+                print(f'Erro ao enviar print: {e}')
+            print('Navegador mantido aberto para marcar manualmente.')
+            return
+
+        navegador.quit()
+
+        if result == 'sem_cita':
+            print('Sem citas disponiveis para concordancia.')
+        elif result == 'bloqueado':
+            print('Tela de bloqueio detectada (The requested URL was rejected). Reiniciando contagem.')
+        else:
+            print('Fluxo de concordancia nao completado; tentando novamente.')
+
+        wait_seconds, base_minutes, jitter = compute_wait_seconds()
+        print(f"Procurando novamente em ~{wait_seconds // 60} min (base {base_minutes}m, fator {jitter:.2f}) (ESC para sair).")
         i = 0
-        print("Procurando novamente em 5 minutos (ESC para sair).")
-        while i < 300:
+        while i < wait_seconds:
             if keyboard.is_pressed('esc'):
-                print("Finalizando.")
+                print('Finalizando.')
                 return
             time.sleep(1)
-            minutes, seconds = divmod(300 - i, 60)
+            minutes, seconds = divmod(wait_seconds - i, 60)
             print(
-                f"Repetindo busca de concordancia em {minutes:02d}:{seconds:02d}",
-                end="\r")
+                f'Repetindo busca de concordancia em {minutes:02d}:{seconds:02d}',
+                end='\r')
             i += 1
 
 
@@ -324,6 +395,18 @@ while exit_key == False:
 
     navegador.get("https://www.tramita.gva.es/ctt-att-atr/asistente/iniciarTramite.html?tramite=CITA_PREVIA&version=2&idioma=es&idProcGuc=14104&idCatGuc=PR")
     navegador.implicitly_wait(10)
+    if is_support_blocked(navegador):
+        print("Tela de bloqueio detectada (The requested URL was rejected). Reiniciando contagem.")
+        navegador.quit()
+        wait_seconds, base_minutes, jitter = compute_wait_seconds()
+        i = 0
+        while i < wait_seconds:
+            minutes, seconds = divmod(wait_seconds - i, 60)
+            print(
+                f"Procurando nova cita para {NOMBRE} no documento {DOCUMENTO} em {minutes:02d}:{seconds:02d}", end="\r")
+            i += 1
+            time.sleep(1)
+        continue
     time.sleep(5)
 
     print('Preenchendo dados...')
@@ -725,13 +808,14 @@ while exit_key == False:
             except:
                 if cita == 0:
                     print(
-                        'Erro ao selecionar cita, Verifique o navegador\n tentando novamente em 5 minutos')
+                        'Erro ao selecionar cita, Verifique o navegador\n tentando novamente em alguns minutos')
                     send_message_to_telegram(
-                        f"Erro ao marcar cita, verifique o navegador\nCita encontrada para {data2_obj}\n voltando a buscar em 5 minutos")
+                        f"Erro ao marcar cita, verifique o navegador\nCita encontrada para {data2_obj}\n voltando a buscar em breve")
 
+                wait_seconds, base_minutes, jitter = compute_wait_seconds()
                 i = 0
-                while i < 300:
-                    minutes, seconds = divmod(300 - i, 60)
+                while i < wait_seconds:
+                    minutes, seconds = divmod(wait_seconds - i, 60)
                     print(
                         f"Voltando a procurar nova cita para {NOMBRE} no documento {DOCUMENTO}em {minutes:02d}:{seconds:02d}", end="\r")
                     i += 1
@@ -744,11 +828,12 @@ while exit_key == False:
         print(texto_label)
         print("Fechando navegador...")
         navegador.quit()
+    wait_seconds, base_minutes, jitter = compute_wait_seconds()
     i = 0
-    print("Procurando cita novamente em 5 minutos")
+    print(f"Procurando cita novamente em ~{wait_seconds // 60} min (base {base_minutes}m, fator {jitter:.2f})")
     print("pressione CTRL + C para sair")
     print(f"Numero de tentativas: {cap}")
-    while i < 300:
+    while i < wait_seconds:
 
         if keyboard.is_pressed('esc'):
             navegador.quit()
@@ -756,7 +841,7 @@ while exit_key == False:
             exit_key = True
             break
         time.sleep(1)
-        minutes, seconds = divmod(300 - i, 60)
+        minutes, seconds = divmod(wait_seconds - i, 60)
         print(
             f"Procurando nova cita para {NOMBRE} no documento {DOCUMENTO} em {minutes:02d}:{seconds:02d}", end="\r")
         i += 1
