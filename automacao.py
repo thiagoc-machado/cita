@@ -3,6 +3,8 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait, Select
+from selenium.webdriver.support import expected_conditions as EC
 import cv2
 from dotenv import load_dotenv
 import pytesseract
@@ -12,66 +14,89 @@ from datetime import datetime
 import requests
 import sys
 import os
+from shutil import which
+from os import path
+
+load_dotenv()
 
 exit_key = False
 
-print(f'selecione 1 para {os.getenv("NOMBRE_1")}')
-print(f'selecione 2 para {os.getenv("NOMBRE_2")}')
-person = input()
-print('selecione 1 para NIE')
-print('selecione 2 para Passaporte')
-doc = input()
+print('selecione o tipo de serviço')
+print('1 - busca e marcação padrão')
+print('2 - carta de concordancia (apenas avisar no Telegram)')
+service_choice = input().strip()
+
+person = None
+doc = None
+if service_choice == '1':
+    print(f'selecione 1 para {os.getenv("NOMBRE_1")}')
+    print(f'selecione 2 para {os.getenv("NOMBRE_2")}')
+    person = input().strip()
+    print('selecione 1 para NIE')
+    print('selecione 2 para Passaporte')
+    doc = input().strip()
 
 bot_token = os.getenv("TELEGRAM_TOKEN")
 bot_chat_id = os.getenv("TELEGRAM_ID")
 
-if person == '1':
-    print('Selecionado ')
-    DATA_MARCADO = os.getenv("DATA_MARCADO_1")
-    DATA_INICIAL = os.getenv("DATA_INICIAL_1")
-    NOMBRE = os.getenv("NOMBRE_1")
-    APELLIDO1 = os.getenv("APELLIDO1_1")
-    APELLIDO2 = os.getenv("APELLIDO2_1")
-    FECHA_NASC = os.getenv("FECHA_NASC_1")
-    TELEFONO = os.getenv("TELEFONO_1")
-    EMAIL = os.getenv("EMAIL_1")
-    if doc == '1':
-        print('Selecionado NIE')
-        DOCUMENTO = os.getenv("NIE_1")
-    elif doc == '2':
-        print('Selecionado Passaporte')
-        DOCUMENTO = os.getenv("PASSAPORTE_1")
+if service_choice == '1':
+    if person == '1':
+        print('Selecionado ')
+        DATA_MARCADO = os.getenv("DATA_MARCADO_1")
+        DATA_INICIAL = os.getenv("DATA_INICIAL_1")
+        NOMBRE = os.getenv("NOMBRE_1")
+        APELLIDO1 = os.getenv("APELLIDO1_1")
+        APELLIDO2 = os.getenv("APELLIDO2_1")
+        FECHA_NASC = os.getenv("FECHA_NASC_1")
+        TELEFONO = os.getenv("TELEFONO_1")
+        EMAIL = os.getenv("EMAIL_1")
+        if doc == '1':
+            print('Selecionado NIE')
+            DOCUMENTO = os.getenv("NIE_1")
+        elif doc == '2':
+            print('Selecionado Passaporte')
+            DOCUMENTO = os.getenv("PASSAPORTE_1")
+        else:
+            print('Opção inválida')
+            exit()
+
+    elif person == '2':
+        print('Selecionado ')
+        DATA_MARCADO = os.getenv("DATA_MARCADO_2")
+        DATA_INICIAL = os.getenv("DATA_INICIAL_2")
+        NOMBRE = os.getenv("NOMBRE_2")
+        APELLIDO1 = os.getenv("APELLIDO1_2")
+        APELLIDO2 = os.getenv("APELLIDO2_2")
+        FECHA_NASC = os.getenv("FECHA_NASC_2")
+        TELEFONO = os.getenv("TELEFONO_2")
+        EMAIL = os.getenv("EMAIL_2")
+        if doc == '1':
+            print('Selecionado NIE')
+            DOCUMENTO = os.getenv("NIE_2")
+        elif doc == '2':
+            print('Selecionado Passaporte')
+            DOCUMENTO = os.getenv("PASSAPORTE_2")
+        else:
+            print('Opção inválida')
+            exit()
     else:
         print('Opção inválida')
         exit()
 
-elif person == '2':
-    print('Selecionado ')
-    DATA_MARCADO = os.getenv("DATA_MARCADO_2")
-    DATA_INICIAL = os.getenv("DATA_INICIAL_2")
-    NOMBRE = os.getenv("NOMBRE_2")
-    APELLIDO1 = os.getenv("APELLIDO1_2")
-    APELLIDO2 = os.getenv("APELLIDO2_2")
-    FECHA_NASC = os.getenv("FECHA_NASC_2")
-    TELEFONO = os.getenv("TELEFONO_2")
-    EMAIL = os.getenv("EMAIL_2")
-    if doc == '1':
-        print('Selecionado NIE')
-        DOCUMENTO = os.getenv("NIE_2")
-    elif doc == '2':
-        print('Selecionado Passaporte')
-        DOCUMENTO = os.getenv("PASSAPORTE_2")
-    else:
-        print('Opção inválida')
-        exit()
-else:
-    print('Opção inválida')
-    exit()
-
-cap = 0
-
-print('\nAbrindo o navegador...')
-
+if service_choice == '2':
+    # Modo concordancia: usa chaves simples do .env e não pergunta mais nada.
+    NOMBRE = os.getenv("NOMBRE")
+    DOCUMENTO = os.getenv("DNI")
+    if not NOMBRE or not DOCUMENTO:
+        print("Preencha NOMBRE e DNI no .env para usar o modo concordancia.")
+        sys.exit(1)
+    DATA_MARCADO = ""
+    DATA_INICIAL = ""
+    APELLIDO1 = ""
+    APELLIDO2 = ""
+    FECHA_NASC = ""
+    TELEFONO = ""
+    EMAIL = ""
 
 def send_message_to_telegram(text):
     try:
@@ -105,6 +130,184 @@ def send_image_to_telegram(image_path):
         print(f"Erro ao enviar imagem para o Telegram: {e}")
 
 
+def click_by_text_or_value(wait, texts):
+    """Tenta clicar em um botão/input pelo texto visível ou valor."""
+    for text in texts:
+        try:
+            wait.until(EC.element_to_be_clickable(
+                (By.XPATH, f"//button[normalize-space()='{text}']"))).click()
+            return True
+        except Exception:
+            try:
+                wait.until(EC.element_to_be_clickable(
+                    (By.XPATH, f"//input[@type='submit' and @value='{text}']"))).click()
+                return True
+            except Exception:
+                continue
+    return False
+
+
+def select_option(wait, locator_candidates, option_text):
+    """Seleciona uma opção em um <select> tentando vários localizadores."""
+    for locator in locator_candidates:
+        try:
+            select_elem = wait.until(EC.element_to_be_clickable(locator))
+            Select(select_elem).select_by_visible_text(option_text)
+            return True
+        except Exception:
+            continue
+    return False
+
+
+def build_chrome_options():
+    """Cria opções do Chrome procurando o binário caso o sistema não exponha por padrão."""
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--remote-debugging-port=9222")
+    binary = os.getenv("CHROME_BINARY")
+    if not binary:
+        for candidate in (
+            "google-chrome",
+            "chromium-browser",
+            "chromium",
+            "/usr/bin/google-chrome",
+            "/usr/bin/chromium-browser",
+            "/usr/bin/chromium",
+            "/snap/bin/chromium",
+            "/snap/bin/chromium-browser",
+        ):
+            found = which(candidate)
+            if found:
+                binary = found
+                break
+    if binary:
+        chrome_options.binary_location = binary
+    return chrome_options
+
+
+def build_chrome_service():
+    """Seleciona o chromedriver adequado: variável de ambiente, snap ou download."""
+    driver_path = os.getenv("CHROMEDRIVER_BINARY")
+    if driver_path and path.exists(driver_path):
+        return Service(executable_path=driver_path)
+
+    snap_driver = "/snap/bin/chromium.chromedriver"
+    if path.exists(snap_driver):
+        return Service(executable_path=snap_driver)
+
+    return Service(ChromeDriverManager().install())
+
+
+def executar_fluxo_concordancia(navegador, wait, documento, nombre):
+    """Fluxo específico para buscar CERTIFICADOS CONCORDANCIA sem marcar cita."""
+    if not select_option(wait, [(By.ID, "form"), (By.NAME, "form")], "Valencia"):
+        return False
+
+    if not click_by_text_or_value(wait, ["Aceptar", "ACEPTAR"]):
+        return False
+
+    # Mantém oficina padrão (Cualquier Oficina) e troca apenas o serviço.
+    tramite_selecionado = select_option(
+        wait,
+        [
+            (By.ID, "tramiteGrupo[0]"),
+            (By.NAME, "tramiteGrupo[0]"),
+            (By.CSS_SELECTOR, "select[id^='tramiteGrupo']")
+        ],
+        "POLICIA - CERTIFICADOS CONCORDANCIA"
+    )
+    if not tramite_selecionado:
+        return False
+
+    if not click_by_text_or_value(wait, ["Aceptar", "ACEPTAR"]):
+        return False
+
+    if not click_by_text_or_value(wait, ["Entrar"]):
+        return False
+
+    # Campos de identificação
+    try:
+        wait.until(EC.element_to_be_clickable(
+            (By.XPATH, "//input[contains(@id,'txtIdCitado') or contains(@name,'txtIdCitado')]"))).send_keys(documento)
+        wait.until(EC.element_to_be_clickable(
+            (By.XPATH, "//input[contains(@id,'txtDesCitado') or contains(@name,'txtDesCitado')]"))).send_keys(nombre)
+    except Exception:
+        return False
+
+    if not click_by_text_or_value(wait, ["Solicitar Cita", "Enviar", "Aceptar"]):
+        return False
+
+    time.sleep(4)
+    return True
+
+
+def buscar_carta_concordancia(documento, nombre):
+    """Loop que verifica a carta de concordancia e apenas avisa no Telegram."""
+    tentativa = 0
+    send_message_to_telegram(
+        f"Bot iniciado no modo CERTIFICADOS CONCORDANCIA para {nombre} ({documento})."
+    )
+
+    while not exit_key:
+        tentativa += 1
+        print(f"Tentativa (concordancia): {tentativa}")
+        load_dotenv()
+        servico = build_chrome_service()
+        navegador = webdriver.Chrome(service=servico, options=build_chrome_options())
+        wait = WebDriverWait(navegador, 15)
+
+        try:
+            navegador.get(
+                "https://icp.administracionelectronica.gob.es/icpplus/index.html")
+            navegador.implicitly_wait(10)
+
+            if not executar_fluxo_concordancia(navegador, wait, documento, nombre):
+                raise Exception("Não foi possível completar o fluxo de concordancia.")
+
+            page_text = navegador.page_source
+            if "En este momento no hay citas disponibles" in page_text:
+                print("Sem citas disponíveis para concordancia.")
+            else:
+                print("Cita disponível para concordancia! Notificando no Telegram.")
+                send_message_to_telegram(
+                    "Há cita disponível para CERTIFICADOS CONCORDANCIA. Entre no site para marcar."
+                )
+                try:
+                    navegador.save_screenshot("cita_concordancia.png")
+                    send_image_to_telegram("cita_concordancia.png")
+                except Exception as e:
+                    print(f"Erro ao enviar print: {e}")
+        except Exception as e:
+            print(f"Erro ao buscar concordancia: {e}")
+        finally:
+            navegador.quit()
+
+        i = 0
+        print("Procurando novamente em 5 minutos (ESC para sair).")
+        while i < 300:
+            if keyboard.is_pressed('esc'):
+                print("Finalizando.")
+                return
+            time.sleep(1)
+            minutes, seconds = divmod(300 - i, 60)
+            print(
+                f"Repetindo busca de concordancia em {minutes:02d}:{seconds:02d}",
+                end="\r")
+            i += 1
+
+
+if service_choice == '2':
+    buscar_carta_concordancia(DOCUMENTO, NOMBRE)
+    sys.exit()
+elif service_choice != '1':
+    print('Opção de serviço inválida')
+    sys.exit()
+
+cap = 0
+print('\nAbrindo o navegador...')
+
+
 send_message_to_telegram(
     f'Bot iniciado\nBuscando cita para {NOMBRE}\nDocumento: {DOCUMENTO}\nBuscando cita com data entre {DATA_INICIAL} e {DATA_MARCADO}.')
 
@@ -115,9 +318,9 @@ while exit_key == False:
     # options.add_argument("--headless")  # Executa o Chrome em modo headless (sem janela visível)
 
     # Instancia o serviço e o navegador
-    servico = Service(ChromeDriverManager().install())
+    servico = build_chrome_service()
     # navegador = webdriver.Chrome(service=servico, options=options)
-    navegador = webdriver.Chrome(service=servico)
+    navegador = webdriver.Chrome(service=servico, options=build_chrome_options())
 
     navegador.get("https://www.tramita.gva.es/ctt-att-atr/asistente/iniciarTramite.html?tramite=CITA_PREVIA&version=2&idioma=es&idProcGuc=14104&idCatGuc=PR")
     navegador.implicitly_wait(10)
