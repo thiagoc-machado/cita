@@ -17,6 +17,7 @@ import os
 from shutil import which
 from os import path
 from automacao_lib import human_pause, compute_wait_seconds, is_support_blocked
+from pathlib import Path
 
 load_dotenv()
 
@@ -233,27 +234,107 @@ def build_chrome_service():
 
 
 
+
+
+
+def detect_unavailable_final(navegador):
+    """Verifica se a tela final exibe mensagem de 'no hay citas' buscando direto no HTML."""
+    try:
+        page = navegador.page_source
+        normalized = page.lower().replace("\xa0", " ")
+        alvo = "en este momento no hay citas disponibles"
+
+        found_page = alvo in normalized
+
+        # Tenta capturar textos visíveis para log
+        container_text = ""
+        msg_info_text = ""
+        try:
+            container_text = navegador.find_element(By.ID, "container").text.strip()
+        except Exception:
+            pass
+        try:
+            msg_info_text = navegador.find_element(By.CSS_SELECTOR, "p.mf-msg__info").text.strip()
+        except Exception:
+            pass
+
+        # Logs de depuração (mantém curtos)
+        print(f"[DEBUG] detect_unavailable_final found_page={found_page}")
+        if container_text:
+            print(f"[DEBUG] container_text={container_text[:200]}")
+        if msg_info_text:
+            print(f"[DEBUG] msg_info_text={msg_info_text[:200]}")
+
+        return found_page or (alvo in container_text.lower()) or (alvo in msg_info_text.lower())
+    except Exception:
+        print("[DEBUG] detect_unavailable_final exception")
+        return False
+
+
+def assert_not_blocked(navegador, contexto=""):
+    """Levanta exceção se a página mostrar bloqueio 'requested URL rejected'."""
+    if is_support_blocked(navegador):
+        msg = "Bloqueio detectado"
+        if contexto:
+            msg += f" ({contexto})"
+        print(f"[DEBUG] {msg}")
+        raise Exception(msg)
+
+
+def dump_debug_page(navegador, label="concordancia"):
+    """Salva HTML e screenshot para depuração quando o fluxo falha."""
+    try:
+        ts = datetime.now().strftime("%Y%m%d-%H%M%S")
+        debug_dir = Path("debug")
+        debug_dir.mkdir(exist_ok=True)
+        html_path = debug_dir / f"debug_{label}_{ts}.html"
+        png_path = debug_dir / f"debug_{label}_{ts}.png"
+        html_path.write_text(navegador.page_source, encoding="utf-8", errors="ignore")
+        try:
+            navegador.save_screenshot(str(png_path))
+        except Exception:
+            pass
+        print(f"[DEBUG] Dump salvo: {html_path} {png_path}")
+    except Exception as e:
+        print(f"[DEBUG] Falha ao salvar dump: {e}")
+
+
 def executar_fluxo_concordancia(navegador, wait, documento, nombre):
     """Fluxo especifico para CERTIFICADOS CONCORDANCIA usando XPaths fornecidos."""
     try:
         if not select_option(wait, [(By.ID, 'form'), (By.NAME, 'form')], 'Valencia'):
+            print("[DEBUG] falha ao selecionar provincia Valencia")
             return 'erro'
 
+        assert_not_blocked(navegador, "apos selecionar provincia")
+
         if not click_xpath(navegador, wait, "//*[@id='btnAceptar']"):
+            print("[DEBUG] falha ao clicar primeiro Aceptar")
             return 'erro'
+
+        assert_not_blocked(navegador, "apos aceitar provincia")
 
         if not select_option(
             wait,
             [(By.ID, 'tramiteGrupo[0]'), (By.NAME, 'tramiteGrupo[0]'), (By.XPATH, "//*[@id='tramiteGrupo[0]']")],
             'POLICIA - CERTIFICADOS CONCORDANCIA'
         ):
+            print("[DEBUG] falha ao selecionar tramite concordancia")
             return 'erro'
+
+        assert_not_blocked(navegador, "apos selecionar tramite")
 
         if not click_xpath(navegador, wait, "//*[@id='btnAceptar']"):
+            print("[DEBUG] falha ao clicar segundo Aceptar")
             return 'erro'
 
+        assert_not_blocked(navegador, "apos segundo aceitar")
+
         if not click_xpath(navegador, wait, "//*[@id='btnEntrar']"):
+            print("[DEBUG] falha ao clicar Entrar")
             return 'erro'
+
+        assert_not_blocked(navegador, "apos entrar")
 
         wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id='txtIdCitado']"))).send_keys(documento)
         human_pause()
@@ -267,16 +348,44 @@ def executar_fluxo_concordancia(navegador, wait, documento, nombre):
         if not click_xpath(navegador, wait, "//*[@id='btnEnviar']"):
             return 'erro'
 
-        msg_elem = wait.until(EC.presence_of_element_located((By.XPATH, "//*[@id='mainWindow']/div/div[2]/section/div[2]/form/div[1]/p")))
-        msg_text = msg_elem.text.strip()
-        if 'En este momento no hay citas disponibles' in msg_text:
+        # Botão "Solicitar Cita" (mesmo id) e checagem de disponibilidade
+        human_pause()
+        try:
+            click_xpath(navegador, wait, "//*[@id='btnEnviar']")
+        except Exception:
+            # segue para checar mensagem mesmo se o segundo clique falhar
+            print("[DEBUG] segundo clique em btnEnviar falhou, seguindo para checar mensagem")
+            pass
+
+        # Checa mensagem final na tela (disponibilidade)
+        time.sleep(2)
+        assert_not_blocked(navegador, "tela final (apos solicitar)")
+
+        unavailable = detect_unavailable_final(navegador)
+        print(f"[DEBUG] resultado detect_unavailable_final={unavailable}")
+        if unavailable:
             click_xpath(navegador, wait, "//*[@id='btnSalir']")
             return 'sem_cita'
 
+        # Se não encontrou a mensagem de indisponibilidade, considera cita disponível
         return 'cita_disponivel'
     except Exception as e:
         print(f'Erro no fluxo de concordancia: {e}')
-        return 'erro'
+        # Mesmo em erro, tenta decidir com base no HTML atual
+        try:
+            if is_support_blocked(navegador):
+                print("[DEBUG] is_support_blocked -> bloqueado (via excecao)")
+                return 'bloqueado'
+            if detect_unavailable_final(navegador):
+                print("[DEBUG] detect_unavailable_final -> sem_cita (via excecao)")
+                return 'sem_cita'
+            # se não encontrar a mensagem de indisponibilidade, assume que há disponibilidade
+            print("[DEBUG] detect_unavailable_final -> cita_disponivel (via excecao)")
+            return 'cita_disponivel'
+        except Exception:
+            # como fallback final, assume indisponível para evitar loop eterno de erro
+            print("[DEBUG] fallback sem_cita (via excecao secundaria)")
+            return 'sem_cita'
 
 
 
@@ -306,6 +415,18 @@ def buscar_carta_concordancia(documento, nombre):
         except Exception as e:
             print(f'Erro ao buscar concordancia: {e}')
 
+        # Se retornou erro, tenta reclassificar pela tela atual antes de fechar
+        if result == 'erro':
+            try:
+                if is_support_blocked(navegador):
+                    print("[DEBUG] reclassificando erro para bloqueado (tela mostra bloqueio)")
+                    result = 'bloqueado'
+                elif detect_unavailable_final(navegador):
+                    print("[DEBUG] reclassificando erro para sem_cita (tela mostra indisponibilidade)")
+                    result = 'sem_cita'
+            except Exception:
+                pass
+
         if result == 'cita_disponivel':
             print('Cita disponivel para concordancia! Notificando no Telegram.')
             send_message_to_telegram(
@@ -319,14 +440,19 @@ def buscar_carta_concordancia(documento, nombre):
             print('Navegador mantido aberto para marcar manualmente.')
             return
 
+        if result == 'erro':
+            dump_debug_page(navegador, label="concordancia_erro")
         navegador.quit()
 
+        print(f"[DEBUG] resultado final do loop: {result}")
         if result == 'sem_cita':
             print('Sem citas disponiveis para concordancia.')
         elif result == 'bloqueado':
             print('Tela de bloqueio detectada (The requested URL was rejected). Reiniciando contagem.')
-        else:
+        elif result == 'erro':
             print('Fluxo de concordancia nao completado; tentando novamente.')
+        else:
+            print('Fluxo de concordancia nao completado; tentando novamente (resultado inesperado).')
 
         wait_seconds, base_minutes, jitter = compute_wait_seconds()
         print(f"Procurando novamente em ~{wait_seconds // 60} min (base {base_minutes}m, fator {jitter:.2f}) (ESC para sair).")

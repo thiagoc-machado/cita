@@ -21,7 +21,13 @@ def compute_wait_seconds():
 
 def is_support_blocked(driver):
     """Detecta tela de bloqueio 'The requested URL was rejected'."""
-    page = driver.page_source
-    if "The requested URL was rejected" in page or "Your support ID is" in page:
+    try:
+        body_text = driver.find_element(By.TAG_NAME, "body").text.lower()
+    except Exception:
+        body_text = ""
+
+    if "the requested url was rejected" in body_text:
         return True
-    return False
+
+    page = driver.page_source.lower()
+    return "the requested url was rejected" in page

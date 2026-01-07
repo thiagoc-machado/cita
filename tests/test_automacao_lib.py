@@ -49,8 +49,10 @@ def test_is_support_blocked_detects_blocked_and_ok():
             self.page_source = page_source
 
     blocked = Dummy("The requested URL was rejected. Your support ID is: 123")
+    only_one_phrase = Dummy("The requested URL was rejected but no id shown")
     ok = Dummy("<html><body>normal</body></html>")
     assert automacao_lib.is_support_blocked(blocked) is True
+    assert automacao_lib.is_support_blocked(only_one_phrase) is False
     assert automacao_lib.is_support_blocked(ok) is False
 
 

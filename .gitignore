@@ -10,6 +10,7 @@ venv/
 # Ignore PyInstaller build output
 dist/
 build/
+debug/
 
 # Ignore IDE-specific settings
 .vscode/
@@ -28,6 +29,7 @@ Thumbs.db
 **/*.pyc
 **/*.pyo
 **/*.pyd
+/.pytest_cache
 
 # Ignore local SQLite database file (if applicable)
 *.sqlite3
